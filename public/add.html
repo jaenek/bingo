@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="content-type" content="text/html">
+<meta name="viewport" content="width=device-width, user-scalable=no">
+<link rel="icon" type="image/png" href="icon-192x192.png">
+<link rel="stylesheet" href="styles.css">
+<title>Bingo</title>
+</head>
+<body>
+<div class="animate-bottom">
+	<h1>New Bingo</h1>
+</div>
+<form action="/save" method="POST" class="container animate-bottom" style="display:flex;flex-flow:column;">
+	Name:<br>
+	<input type="text" name="name">
+	Title:<br>
+	<input type="text" name="title">
+	Phrases:<br>
+	<div class="container" style="grid-template-columns: auto auto;">
+		{{range .Phrases}}
+			<input type="text" name="{{.ID}}">
+		{{end}}
+		<input type="submit" value="Save">
+	</div>
+</form>
+</body>
+</html>
