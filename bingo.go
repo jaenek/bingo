@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bytes"
+	"encoding/binary"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
@@ -52,6 +55,37 @@ var data = []string{
 var p = &Page{
 	Title:   "Love it or List it bingo",
 	Phrases: make([]Phrase, 25),
+}
+
+func (p *Page) write(path string) error {
+	buf := new(bytes.Buffer)
+	err := binary.Write(buf, binary.LittleEndian, p)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(path, buf.Bytes(), 0666)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func read(path string) (*Page, error) {
+	file, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	p := &Page{}
+	buf := bytes.NewBuffer(file)
+	err = binary.Read(buf, binary.LittleEndian, p)
+	if err != nil {
+		return nil, err
+	}
+
+	return p, nil
 }
 
 func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
