@@ -1,0 +1,35 @@
+body {
+	text-align: center;
+	font-size: 2.5vh;
+}
+
+.container {
+	display: grid;
+	grid-template-columns: auto auto auto auto auto;
+	grid-template-rows: auto auto auto auto auto;
+	grid-column-gap: 2vw;
+	grid-row-gap: 2vw;
+	width: 80%;
+	margin: auto;
+	align-items: center;
+	justify-items: center;
+}
+
+input[type=checkbox] {
+	display: none;
+}
+
+input:checked + label {
+	color: green;
+}
+
+.animate-bottom {
+  position: relative;
+  animation-name: animatebottom;
+  animation-duration: 1s
+}
+
+@keyframes animatebottom {
+  from{ bottom:-100px; opacity:0 }
+  to{ bottom:0; opacity:1 }
+}
