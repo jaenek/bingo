@@ -17,7 +17,7 @@
 	Zwroty:<br>
 	<div class="container" id="edit">
 		{{range .Phrases}}
-			<input type="text" name="{{.ID}}" value="{{.Phrase}}">
+			<input type="text" name="{{.ID}}" value="{{.Phrase}}" autocomplete="off">
 		{{end}}
 		<input type="submit" value="Zapisz">
  		<button type="button" onclick="window.location.assign('/bingo/')">Anuluj</button>

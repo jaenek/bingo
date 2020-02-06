@@ -15,17 +15,17 @@
 	<div class="container" id="edit">
 		<div>
 			Name:<br>
-			<input type="text" name="name">
+			<input type="text" name="name" autocomplete="off">
 		</div>
 		<div>
 		Title:<br>
-		<input type="text" name="title">
+		<input type="text" name="title" autocomplete="off">
 		</div>
 	</div>
 	Phrases:<br>
 	<div class="container" id="edit">
 		{{range .Phrases}}
-			<input type="text" name="{{.ID}}">
+			<input type="text" name="{{.ID}}" autocomplete="off">
 		{{end}}
 		<input type="submit" value="Save">
  		<button type="button" onclick="window.location.assign('/bingo/')">Anuluj</button>
