@@ -1,7 +1,8 @@
 body {
 	text-align: center;
-	font-size: 2.5vh;
 }
+
+h1#index {font-size:4em;}
 
 .container {
 	display: grid;
@@ -15,12 +16,30 @@ body {
 	justify-items: center;
 }
 
+.container#index {
+	display:flex;
+	flex-flow:column;
+	font-size:2em;
+}
+
+form.container {
+	display:flex;
+	flex-flow:column;
+}
+
+.container#edit {
+	grid-template-columns: auto auto;
+	grid-template-rows: auto;
+}
+
+.container#edit:last-child {grid-template-columns: auto auto auto;}
+
 input[type=checkbox] {
 	display: none;
 }
 
 input:checked + label {
-	color: green;
+	text-decoration: line-through;
 }
 
 .animate-bottom {
