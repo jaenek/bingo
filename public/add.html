@@ -9,25 +9,25 @@
 </head>
 <body>
 <div class="animate-bottom">
-	<h1>New Bingo</h1>
+	<h1>Nowe Bingo</h1>
 </div>
 <form action="/bingo/save" method="POST" class="container animate-bottom">
 	<div class="container" id="edit">
 		<div>
-			Name:<br>
+			Krótka nazwa:<br>
 			<input type="text" name="name" autocomplete="off">
 		</div>
 		<div>
-		Title:<br>
+		Tytuł:<br>
 		<input type="text" name="title" autocomplete="off">
 		</div>
 	</div>
-	Phrases:<br>
+	Zwroty:<br>
 	<div class="container" id="edit">
 		{{range .Phrases}}
 			<input type="text" name="{{.ID}}" autocomplete="off">
 		{{end}}
-		<input type="submit" value="Save">
+		<input type="submit" value="Zapisz">
  		<button type="button" onclick="window.location.assign('/bingo/')">Anuluj</button>
 	</div>
 </form>
