@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="content-type" content="text/html">
+<link rel="icon" type="image/png" href="../icon-192x192.png">
+<link rel="stylesheet" href="../styles.css">
+<title>Bingo</title>
+</head>
+<body>
+<div class="animate-bottom">
+	<h1>Edycja {{.Name}}</h1>
+</div>
+<form action="/bingo/save" method="POST" class="container animate-bottom">
+	<input type="text" name="name" value="{{.Name}}" style="display:none;">
+	<input type="text" name="title" value="{{.Title}}" style="display:none;">
+	Zwroty:<br>
+	<div class="container" id="edit">
+		{{range .Phrases}}
+			<input type="text" name="{{.ID}}" value="{{.Phrase}}">
+		{{end}}
+		<input type="submit" value="Zapisz">
+ 		<button type="button" onclick="window.location.assign('/bingo/')">Anuluj</button>
+	</div>
+</form>
+</body>
+</html>

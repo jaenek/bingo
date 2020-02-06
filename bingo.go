@@ -20,7 +20,7 @@ type Phrase struct {
 }
 
 type Page struct {
-	name    string   `json: "name"`
+	Name    string   `json: "name"`
 	Title   string   `json: "title"`
 	Phrases []Phrase `json: "phrases"`
 }
@@ -31,7 +31,7 @@ func (p *Page) write() error {
 		return err
 	}
 
-	err = ioutil.WriteFile("bingos/"+p.name+".json", b, 0666)
+	err = ioutil.WriteFile("bingos/"+p.Name+".json", b, 0666)
 	if err != nil {
 		return err
 	}
@@ -68,9 +68,14 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
 	}
 }
 
+func getPath(fullpath string) string {
+	return fullpath[len("/bingo"):]
+}
+
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		http.ServeFile(w, r, srvPath+r.URL.Path)
+	path := getPath(r.URL.Path)
+	if path != "/" {
+		http.ServeFile(w, r, srvPath+path)
 		return
 	}
 
@@ -97,7 +102,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func playHandler(w http.ResponseWriter, r *http.Request) {
-	name := r.URL.Path[len("/play/"):]
+	name := getPath(r.URL.Path)[len("/play/"):]
 	if len(name) == 0 {
 		http.Redirect(w, r, "/", http.StatusFound)
 		return
@@ -128,9 +133,25 @@ func addHandler(w http.ResponseWriter, r *http.Request) {
 	renderTemplate(w, srvPath+"/add.html", p)
 }
 
+func editHandler(w http.ResponseWriter, r *http.Request) {
+	name := getPath(r.URL.Path)[len("/edit/"):]
+	if len(name) == 0 {
+		http.Redirect(w, r, "/", http.StatusFound)
+		return
+	}
+
+	p, err := read("bingos/" + name + ".json")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	renderTemplate(w, srvPath+"/edit.html", p)
+}
+
 func saveHandler(w http.ResponseWriter, r *http.Request) {
 	p := &Page{
-		name:    r.FormValue("name"),
+		Name:    r.FormValue("name"),
 		Title:   r.FormValue("title"),
 		Phrases: make([]Phrase, 25),
 	}
@@ -142,12 +163,13 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 
 	p.write()
 
-	http.Redirect(w, r, "/play/"+p.name, http.StatusFound)
+	http.Redirect(w, r, "/play/"+p.Name, http.StatusFound)
 }
 func main() {
-	http.HandleFunc("/play/", playHandler)
-	http.HandleFunc("/add", addHandler)
-	http.HandleFunc("/save", saveHandler)
-	http.HandleFunc("/", indexHandler)
-	log.Fatal(http.ListenAndServe(":8000", nil))
+	http.HandleFunc("/bingo/play/", playHandler)
+	http.HandleFunc("/bingo/add", addHandler)
+	http.HandleFunc("/bingo/edit/", editHandler)
+	http.HandleFunc("/bingo/save", saveHandler)
+	http.HandleFunc("/bingo/", indexHandler)
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
