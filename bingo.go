@@ -210,7 +210,7 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 		log.Error(err.Error())
 	}
 
-	http.Redirect(w, r, "/play/"+p.Name, http.StatusFound)
+	http.Redirect(w, r, "/bingo/play/"+p.Name, http.StatusFound)
 }
 func main() {
 	http.HandleFunc("/bingo/play/", playHandler)
