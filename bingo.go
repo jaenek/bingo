@@ -2,13 +2,18 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"html/template"
 	"io/ioutil"
-	"log"
 	"math/rand"
 	"net/http"
+	"regexp"
 	"strconv"
+
+	log "github.com/sirupsen/logrus"
 )
+
+var validPath = regexp.MustCompile("^/bingo/(edit|play)/([a-zA-Z0-9]+)$")
 
 const (
 	srvPath string = "./public"
@@ -31,11 +36,15 @@ func (p *Page) write() error {
 		return err
 	}
 
-	err = ioutil.WriteFile("bingos/"+p.Name+".json", b, 0666)
+	path := "bingos/" + p.Name + ".json"
+	err = ioutil.WriteFile(path, b, 0666)
 	if err != nil {
 		return err
 	}
 
+	log.WithFields(log.Fields{
+		"file": path,
+	}).Info("Saving to file.")
 	return nil
 }
 
@@ -54,28 +63,40 @@ func read(path string) (*Page, error) {
 	return p, nil
 }
 
-func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
-	t, err := template.ParseFiles(tmpl)
+func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) error {
+	log.WithFields(log.Fields{
+		"file": srvPath + tmpl,
+	}).Info("Rendering template.")
+
+	t, err := template.ParseFiles(srvPath + tmpl)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return err
 	}
 
 	err = t.Execute(w, p)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return err
 	}
+
+	return nil
 }
 
-func getPath(fullpath string) string {
-	return fullpath[len("/bingo"):]
+func getName(w http.ResponseWriter, r *http.Request) (string, error) {
+	m := validPath.FindStringSubmatch(r.URL.Path)
+	if m == nil {
+		http.NotFound(w, r)
+		return "", errors.New("Invalid Page Name")
+	}
+	return m[2], nil // The title is the second subexpression.
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	path := getPath(r.URL.Path)
+	path := r.URL.Path[len("/bingo"):]
 	if path != "/" {
 		http.ServeFile(w, r, srvPath+path)
+		log.WithFields(log.Fields{
+			"file": path,
+		}).Info("Serving file.")
 		return
 	}
 
@@ -85,7 +106,8 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 
 	files, err := ioutil.ReadDir("bingos/")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.NotFound(w, r)
+		log.Error(err.Error())
 		return
 	}
 
@@ -95,22 +117,28 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 
 	for i, file := range files {
 		fn := file.Name()
-		index.Bingos[i] = fn[:len(fn)-5]
+		index.Bingos[i] = fn[:len(fn)-len(".json")]
 	}
 
-	renderTemplate(w, srvPath+"/index.html", index)
+	err = renderTemplate(w, "/index.html", index)
+	if err != nil {
+		http.NotFound(w, r)
+		log.Error(err.Error())
+		return
+	}
 }
 
 func playHandler(w http.ResponseWriter, r *http.Request) {
-	name := getPath(r.URL.Path)[len("/play/"):]
-	if len(name) == 0 {
-		http.Redirect(w, r, "/", http.StatusFound)
+	name, err := getName(w, r)
+	if err != nil {
+		log.Error(err.Error())
 		return
 	}
 
 	p, err := read("bingos/" + name + ".json")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.NotFound(w, r)
+		log.Error(err.Error())
 		return
 	}
 
@@ -118,7 +146,12 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 		p.Phrases[i], p.Phrases[j] = p.Phrases[j], p.Phrases[i]
 	})
 
-	renderTemplate(w, srvPath+"/play.html", p)
+	err = renderTemplate(w, "/play.html", p)
+	if err != nil {
+		http.NotFound(w, r)
+		log.Error(err.Error())
+		return
+	}
 }
 
 func addHandler(w http.ResponseWriter, r *http.Request) {
@@ -130,23 +163,34 @@ func addHandler(w http.ResponseWriter, r *http.Request) {
 		p.Phrases[i].ID = uint8(i)
 	}
 
-	renderTemplate(w, srvPath+"/add.html", p)
+	err := renderTemplate(w, "/add.html", p)
+	if err != nil {
+		http.NotFound(w, r)
+		log.Error(err.Error())
+		return
+	}
 }
 
 func editHandler(w http.ResponseWriter, r *http.Request) {
-	name := getPath(r.URL.Path)[len("/edit/"):]
-	if len(name) == 0 {
-		http.Redirect(w, r, "/", http.StatusFound)
+	name, err := getName(w, r)
+	if err != nil {
+		log.Error(err.Error())
 		return
 	}
 
 	p, err := read("bingos/" + name + ".json")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.NotFound(w, r)
+		log.Error(err.Error())
 		return
 	}
 
-	renderTemplate(w, srvPath+"/edit.html", p)
+	err = renderTemplate(w, "/edit.html", p)
+	if err != nil {
+		http.NotFound(w, r)
+		log.Error(err.Error())
+		return
+	}
 }
 
 func saveHandler(w http.ResponseWriter, r *http.Request) {
@@ -161,7 +205,10 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 		p.Phrases[i].Phrase = r.FormValue(strconv.Itoa(i))
 	}
 
-	p.write()
+	err := p.write()
+	if err != nil {
+		log.Error(err.Error())
+	}
 
 	http.Redirect(w, r, "/play/"+p.Name, http.StatusFound)
 }
